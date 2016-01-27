@@ -100,12 +100,9 @@ namespace TimechartReader
 
     public class TimetablePeriod
     {
-        public int DayNum;
-        public int PeriodNum;
         public string Name;
         public TimeSpan StartTime;
         public TimeSpan EndTime;
-        public TTABLECLS.SlotEntry Data;
     }
 
     public class TimetableSlot
@@ -113,6 +110,7 @@ namespace TimechartReader
         public string Day;
         public string Slot;
         public string Year;
+        public TimetablePeriod Period;
         public int Level;
         public Subject Subject;
         public Teacher Teacher;
@@ -121,7 +119,12 @@ namespace TimechartReader
 
         public override string ToString()
         {
-            return String.Format("{0}:{1}:{2}:{3} S:{4} T:{5} R:{6} F:{7:X4}", Day, Slot, Year, Level, Subject == null ? "---" : Subject.Code, Teacher == null ? "---" : Teacher.Code, Room == null ? "---" : Room.Code, Flags);
+            return String.Format("{0}:{1} ({8}-{9}):{2}:{3} S:{4} T:{5} R:{6} F:{7:X4}", 
+                Day, Slot, Year, Level, 
+                Subject == null ? "---" : Subject.Code, 
+                Teacher == null ? "---" : Teacher.Code, 
+                Room == null ? "---" : Room.Code, Flags,
+                Period.StartTime, Period.EndTime);
         }
     }
 }

@@ -21,7 +21,6 @@ namespace TimechartReader
         public IList<string> TimetableDays { get; protected set; }
         public IList<string> TimetableSlots { get; protected set; }
         public IList<TimetableSlot> Timetable { get; protected set; }
-        public IList<TimetablePeriod> Periods { get; protected set; }
 
         public Timechart(string dataDirectory, string timetableName)
         {
@@ -38,7 +37,6 @@ namespace TimechartReader
             TimetableYears = ttnam.Year.ToList();
             TimetableDays = ttnam.Day.ToList();
             TimetableSlots = ttnam.Slot.ToList();
-            Periods = GetPeriods(timetableName, ttnam.Day.Length, ttnam.Slot.Length);
 
             Students = GetStudents(Subjects, Teachers, Rooms, Houses, Faculties, TimetableYears);
             SetSubjectInfo(Subjects, Timetable);
@@ -64,16 +62,19 @@ namespace TimechartReader
         {
             TTABLETTW timetable = ReadFile(timetableName + ".TTW", reader => new TimechartReader.TTABLETTW(reader));
             TTABLENAM ttablename = ReadFile(timetableName + ".NAM", reader => new TimechartReader.TTABLENAM(reader, timetable.Years, timetable.Slots, timetable.Days));
+            TTABLECLS periods = ReadFile(timetableName + ".CLS", reader => new TTABLECLS(reader, timetable.Days, timetable.Slots));
             ttnam = ttablename;
             return timetable.Entries.SelectMany((td, dn) =>
-                td.SelectMany((ts, sn) =>
-                    ts.SelectMany((ty, yn) =>
+                td.Zip(periods.Entries[dn], (te, pe) => new { t = te, p = new TimetablePeriod { Name = pe.Name, StartTime = pe.StartTime, EndTime = pe.EndTime } })
+                  .SelectMany((ts, sn) =>
+                    ts.t.SelectMany((ty, yn) =>
                         ty.Select((tl, ln) =>
                             new TimetableSlot
                             {
                                 Day = ttablename.Day[dn],
                                 Slot = ttablename.Slot[sn],
                                 Year = ttablename.Year[yn],
+                                Period = ts.p,
                                 Level = ln + 1,
                                 Subject = tl.Subject > 0 ? subjects[tl.Subject - 1] : null,
                                 Teacher = tl.Teacher > 0 ? teachers[tl.Teacher - 1] : null,
@@ -129,12 +130,6 @@ namespace TimechartReader
         {
             CLASSx classes = ReadFile(String.Format("CLASS{0}.DAT", len), reader => new CLASSx(reader, (ushort)len));
             return classes.Items.Select(v => new Class { Code = v }).ToList();
-        }
-
-        protected IList<TimetablePeriod> GetPeriods(string ttablename, int days, int slots)
-        {
-            TTABLECLS periods = ReadFile(String.Format("{0}.CLS", ttablename), reader => new TTABLECLS(reader, days, slots));
-            return periods.Entries.SelectMany((se, sn) => se.Select((de, dn) => new TimetablePeriod { PeriodNum = sn + 1, DayNum = dn + 1, Name = de.Name, StartTime = de.StartTime, EndTime = de.EndTime, Data = de })).ToList();
         }
 
         protected IList<Class> GetClasses()
