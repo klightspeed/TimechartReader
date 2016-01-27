@@ -98,6 +98,16 @@ namespace TimechartReader
         public string Name;
     }
 
+    public class TimetablePeriod
+    {
+        public int DayNum;
+        public int PeriodNum;
+        public string Name;
+        public TimeSpan StartTime;
+        public TimeSpan EndTime;
+        public TTABLECLS.SlotEntry Data;
+    }
+
     public class TimetableSlot
     {
         public string Day;

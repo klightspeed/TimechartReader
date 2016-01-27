@@ -21,6 +21,7 @@ namespace TimechartReader
         public IList<string> TimetableDays { get; protected set; }
         public IList<string> TimetableSlots { get; protected set; }
         public IList<TimetableSlot> Timetable { get; protected set; }
+        public IList<TimetablePeriod> Periods { get; protected set; }
 
         public Timechart(string dataDirectory, string timetableName)
         {
@@ -37,6 +38,8 @@ namespace TimechartReader
             TimetableYears = ttnam.Year.ToList();
             TimetableDays = ttnam.Day.ToList();
             TimetableSlots = ttnam.Slot.ToList();
+            Periods = GetPeriods(timetableName, ttnam.Day.Length, ttnam.Slot.Length);
+
             Students = GetStudents(Subjects, Teachers, Rooms, Houses, Faculties, TimetableYears);
             SetSubjectInfo(Subjects, Timetable);
         }
@@ -128,6 +131,12 @@ namespace TimechartReader
             return classes.Items.Select(v => new Class { Code = v }).ToList();
         }
 
+        protected IList<TimetablePeriod> GetPeriods(string ttablename, int days, int slots)
+        {
+            TTABLECLS periods = ReadFile(String.Format("{0}.CLS", ttablename), reader => new TTABLECLS(reader, days, slots));
+            return periods.Entries.SelectMany((se, sn) => se.Select((de, dn) => new TimetablePeriod { PeriodNum = sn + 1, DayNum = dn + 1, Name = de.Name, StartTime = de.StartTime, EndTime = de.EndTime, Data = de })).ToList();
+        }
+
         protected IList<Class> GetClasses()
         {
             CLASS classes = ReadFile("CLASS.DAT", reader => new CLASS(reader));
@@ -137,22 +146,30 @@ namespace TimechartReader
         protected IList<Student> GetStudents(IList<Subject> subjects, IList<Teacher> teachers, IList<Room> rooms, IList<House> houses, IList<Faculty> faculties, string year, int timetableYear)
         {
             IList<Class> classes = GetClasses();
-            CHOICEx students = ReadFile(String.Format("CHOICE{0}.ST", timetableYear), reader => new CHOICEx(reader));
-            return students.Entries.Select(v =>
-                new Student
-                {
-                    Surname = v.Surname,
-                    GivenName = v.GivenName,
-                    Gender = new String(new char[] { v.Gender }),
-                    Code = v.Code,
-                    Subjects = v.Subjects.Select(subj => subjects[subj - 1]).ToArray(),
-                    Class = v.Class > 0 ? classes[v.Class - 1] : null,
-                    Tutor = v.Tutor > 0 ? teachers[v.Tutor - 1] : null,
-                    House = v.House > 0 ? houses[v.House - 1] : null,
-                    Room = v.Room > 0 ? rooms[v.Room - 1] : null,
-                    Year = year,
-                }
-            ).ToList();
+            string choicename = String.Format("CHOICE{0}.ST", timetableYear);
+            if (File.Exists(Path.Combine(DataDirectory, choicename)))
+            {
+                CHOICEx students = ReadFile(choicename, reader => new CHOICEx(reader));
+                return students.Entries.Select(v =>
+                    new Student
+                    {
+                        Surname = v.Surname,
+                        GivenName = v.GivenName,
+                        Gender = new String(new char[] { v.Gender }),
+                        Code = v.Code,
+                        Subjects = v.Subjects.Select(subj => subjects[subj - 1]).ToArray(),
+                        Class = v.Class > 0 ? classes[v.Class - 1] : null,
+                        Tutor = v.Tutor > 0 ? teachers[v.Tutor - 1] : null,
+                        House = v.House > 0 ? houses[v.House - 1] : null,
+                        Room = v.Room > 0 ? rooms[v.Room - 1] : null,
+                        Year = year,
+                    }
+                ).ToList();
+            }
+            else
+            {
+                return new List<Student>();
+            }
         }
 
         protected IList<Student> GetStudents(IList<Subject> subjects, IList<Teacher> teachers, IList<Room> rooms, IList<House> houses, IList<Faculty> faculties, IList<string> years)

@@ -207,8 +207,8 @@ namespace TimechartReader
             public string Name;
             public byte Unk1;
             public double Unk2;
-            public double Unk3;
-            public double Unk4;
+            public TimeSpan StartTime;
+            public TimeSpan EndTime;
 
             public SlotEntry(BinaryReader reader, int day, int slot)
             {
@@ -216,8 +216,13 @@ namespace TimechartReader
                 Name = Encoding.ASCII.GetString(reader.ReadBytes(NameLength));
                 Unk1 = reader.ReadByte();
                 Unk2 = reader.ReadDouble();
-                Unk3 = reader.ReadDouble();
-                Unk4 = reader.ReadDouble();
+                StartTime = TimeSpan.FromDays(reader.ReadDouble());
+                EndTime = TimeSpan.FromDays(reader.ReadDouble());
+            }
+
+            public override string ToString()
+            {
+                return String.Format("{0} ({1}-{2})", this.Name, this.StartTime, this.EndTime);
             }
         }
 
@@ -225,7 +230,7 @@ namespace TimechartReader
         public ushort[] Unk2;
         public DayEntry[] Entries;
 
-        public TTABLECLS(BinaryReader reader, int weeks, int days, int slots)
+        public TTABLECLS(BinaryReader reader, int days, int slots)
         {
             // Skip the leading empty space
             List<ushort> unk = new List<ushort>();
