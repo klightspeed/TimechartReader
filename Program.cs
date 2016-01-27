@@ -28,7 +28,7 @@ namespace TimechartReader
                         student.Year,
                         subject.Code,
                         subject.Name,
-                        subject.Teachers.First().Code
+                        String.Join("\t",subject.Teachers.Select(t => t.Code))
                     );
                 }
             }
