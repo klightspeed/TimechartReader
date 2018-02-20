@@ -43,6 +43,7 @@ namespace TimechartReader
         public List<string> Years = new List<string>();
         public List<Teacher> Teachers = new List<Teacher>();
         public List<Room> Rooms = new List<Room>();
+        public List<TimetableSlot> Slots = new List<TimetableSlot>();
 
         public override string ToString()
         {
@@ -100,6 +101,7 @@ namespace TimechartReader
 
     public class TimetablePeriod
     {
+        public string ID;
         public string Name;
         public TimeSpan StartTime;
         public TimeSpan EndTime;
@@ -107,6 +109,7 @@ namespace TimechartReader
 
     public class TimetableSlot
     {
+        public int DayNumber;
         public string Day;
         public string Slot;
         public string Year;

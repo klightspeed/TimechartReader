@@ -196,8 +196,11 @@ namespace TimechartReader
         public class DayEntry : List<SlotEntry>
         {
             public DayEntry(BinaryReader reader, int day, int slots)
-                : base(Enumerable.Range(0, slots).Select(i => new SlotEntry(reader, day, i)))
             {
+                for (int i = 0; i < slots; i++)
+                {
+                    this.Add(new SlotEntry(reader, day, i));
+                }
             }
         }
 
@@ -205,7 +208,7 @@ namespace TimechartReader
         {
             public ushort NameLength;
             public string Name;
-            public byte Unk1;
+            public char Number;
             public double Unk2;
             public TimeSpan StartTime;
             public TimeSpan EndTime;
@@ -214,10 +217,12 @@ namespace TimechartReader
             {
                 NameLength = reader.ReadUInt16();
                 Name = Encoding.ASCII.GetString(reader.ReadBytes(NameLength));
-                Unk1 = reader.ReadByte();
+                Number = (char)reader.ReadByte();
                 Unk2 = reader.ReadDouble();
-                StartTime = TimeSpan.FromDays(reader.ReadDouble());
-                EndTime = TimeSpan.FromDays(reader.ReadDouble());
+                double startval = reader.ReadDouble();
+                double endval = reader.ReadDouble();
+                StartTime = TimeSpan.FromDays(startval);
+                EndTime = TimeSpan.FromDays(endval);
             }
 
             public override string ToString()
@@ -228,6 +233,7 @@ namespace TimechartReader
 
         public ushort[] Unk1;
         public ushort[] Unk2;
+        public ushort[] Unk3;
         public DayEntry[] Entries;
 
         public TTABLECLS(BinaryReader reader, int days, int slots)
@@ -238,7 +244,7 @@ namespace TimechartReader
 
             do
             {
-                unk2 = Enumerable.Range(0, 6).Select(i => reader.ReadUInt16()).ToArray();
+                unk2 = Enumerable.Range(0, days).Select(i => reader.ReadUInt16()).ToArray();
                 if (unk2.All(v => v == 0))
                 {
                     unk.AddRange(unk2);
@@ -247,9 +253,13 @@ namespace TimechartReader
             while (unk2.All(v => v == 0));
 
             Unk1 = unk.ToArray();
-            Unk2 = unk2.Concat(Enumerable.Range(0, 6).Select(i => reader.ReadUInt16())).ToArray();
+            Unk2 = unk2;
+            Unk3 = Enumerable.Range(0, 12).Select(i => reader.ReadUInt16()).ToArray();
 
-            Entries = Enumerable.Range(0, days).Select(i => new DayEntry(reader, i, slots)).ToArray();
+            Entries = new DayEntry[days];
+
+            for (int i = 0; i < days; i++)
+                Entries[i] = new DayEntry(reader, i, slots);
         }
     }
 

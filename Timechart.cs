@@ -65,12 +65,13 @@ namespace TimechartReader
             TTABLECLS periods = ReadFile(timetableName + ".CLS", reader => new TTABLECLS(reader, timetable.Days, timetable.Slots));
             ttnam = ttablename;
             return timetable.Entries.SelectMany((td, dn) =>
-                td.Zip(periods.Entries[dn], (te, pe) => new { t = te, p = new TimetablePeriod { Name = pe.Name, StartTime = pe.StartTime, EndTime = pe.EndTime } })
+                td.Zip(periods.Entries[dn], (te, pe) => new { t = te, p = new TimetablePeriod { ID = pe.Number.ToString(), Name = pe.Name, StartTime = pe.StartTime, EndTime = pe.EndTime } })
                   .SelectMany((ts, sn) =>
                     ts.t.SelectMany((ty, yn) =>
                         ty.Select((tl, ln) =>
                             new TimetableSlot
                             {
+                                DayNumber = dn,
                                 Day = ttablename.Day[dn],
                                 Slot = ttablename.Slot[sn],
                                 Year = ttablename.Year[yn],
@@ -190,6 +191,7 @@ namespace TimechartReader
                     {
                         slot.Subject.Years.Add(slot.Year);
                     }
+                    slot.Subject.Slots.Add(slot);
                 }
             }
         }
